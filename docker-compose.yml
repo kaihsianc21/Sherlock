@@ -1,0 +1,22 @@
+version: "3"
+services:
+  web:
+    image: kaihsianc/sherlock-api
+    restart: always
+    ports:
+     - "5000:5000"
+    depends_on:
+      - redis
+  worker:
+    image: kaihsianc/sherlock-tensorflow
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CELERY_BROKER_URL=redis://redis:6379
+      - CELERY_RESULT_BACKEND=redis://redis:6379
+    depends_on:
+      - redis
+  redis:
+    image: redis
+

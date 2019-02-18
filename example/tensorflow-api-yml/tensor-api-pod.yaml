@@ -1,0 +1,13 @@
+apiVersion: extensions/v1beta1
+kind: Pod
+metadata:
+  name: tensorflow-api
+  labels:
+    app: tensorflow-api
+spec:
+  containers:
+  - image: kaihsianc/tensorflow-flask
+    name: tensorflow-api
+    resources:
+      limits:
+        nvidia.com/gpu: 1

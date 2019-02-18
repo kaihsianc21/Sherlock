@@ -1,0 +1,38 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: sherlock-api
+  namespace: sherlock
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: sherlock-api
+    spec:
+      containers:
+      - image: kaihsianc/sherlock-api
+        imagePullPolicy: Always
+        name: sherlock-api
+        env:
+          - name: CELERY_BROKER_URL
+            value: "redis://sherlock-redis:6379"
+          - name: CELERY_RESULT_BACKEND
+            value: "redis://sherlock-redis:6379"
+        ports:
+          - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sherlock-api
+  namespace: sherlock
+spec:
+  type: LoadBalancer       
+  ports:
+  - port: 8080             
+    protocol: TCP          
+    targetPort: 5000         
+  selector:                
+    app: sherlock-api
+

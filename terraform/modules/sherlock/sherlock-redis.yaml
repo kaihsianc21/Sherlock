@@ -1,0 +1,38 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ${namespace}-redis
+  namespace: ${namespace}
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ${namespace}-redis
+    spec:
+      containers:
+      - image: redis:latest
+        imagePullPolicy: Always
+        name: ${namespace}-redis
+        ports:
+          - containerPort: 6379
+            name: redis
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${namespace}-redis
+  namespace: ${namespace}
+  labels:
+    app: ${namespace}-redis
+spec:
+  selector:                
+    app: ${namespace}-redis
+  ports:
+  - protocol: TCP
+    name: redis   
+    port: 6379          
+    targetPort: 6379
+  type: ClusterIP 
+            

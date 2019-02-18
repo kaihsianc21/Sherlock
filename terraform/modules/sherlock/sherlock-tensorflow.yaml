@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ${namespace}-tensorflow
+  namespace: ${namespace}
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: ${namespace}-tensorflow
+    spec:
+      containers:
+      - image: kaihsianc/sherlock-tensorflow:dev
+        imagePullPolicy: Always
+        name: ${namespace}-tensorflow
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+        env:
+          - name: CELERY_BROKER_URL
+            value: "redis://${namespace}-redis:6379"
+          - name: CELERY_RESULT_BACKEND
+            value: "redis://${namespace}-redis:6379"
+          - name: NVIDIA_VISIBLE_DEVICES
+            value: "all"
+          - name: AWS_ACCESS_KEY_ID
+            value: ${AWS_ACCESS_KEY_ID}
+          - name: AWS_SECRET_ACCESS_KEY
+            value: ${AWS_SECRET_ACCESS_KEY}
+          
+
+    

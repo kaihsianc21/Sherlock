@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sherlock-api-service
+spec:
+  type: LoadBalancer       
+  ports:
+  - port: 8080             
+    protocol: TCP          
+    targetPort: 5000         
+  selector:                
+    app: tensorflow-api 
