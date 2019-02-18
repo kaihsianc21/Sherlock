@@ -11,7 +11,7 @@ spec:
         app: sherlock-tensorflow
     spec:
       containers:
-      - image: kaihsianc/sherlock-tensorflow:dev
+      - image: kaihsianc/sherlock-tensorflow
         imagePullPolicy: Always
         name: sherlock-tensorflow
         resources:

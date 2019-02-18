@@ -26,6 +26,7 @@ s3transfer==0.1.13
 scipy==1.2.0
 six==1.12.0
 tensorboard==1.12.2
+tensorflow==1.12.0
 tensorflow-gpu==1.12.0
 termcolor==1.1.0
 urllib3==1.24.1

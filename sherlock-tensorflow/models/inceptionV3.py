@@ -1,24 +1,107 @@
+#
+# * InceptionV3
+# * Inference, TransferLearner, Retrainer
+#
+
+
 import os
 import glob
-
 import json
+import numpy as np
 
+# Keras
 import keras
-from keras.models import Model
+from keras.models import Model, load_model
 from keras.optimizers import SGD
 from keras.models import load_model
+from keras.applications import imagenet_utils
 from keras.applications.inception_v3 import InceptionV3, preprocess_input
 from keras.layers import Dense, GlobalAveragePooling2D
+from keras.preprocessing import image
 from keras.preprocessing.image import ImageDataGenerator
 
 
-class InceptionRetrainer:
+
+class infernecer:
+    def __init__(self):
+        # pre-load some models here on start
+        self.loaded_models = {}
+        self.loaded_labels = {}
+
+    def load_model(self, model_path, model_name):
+        status = None
+        try:
+            if model_name not in self.loaded_models.keys():
+                self.loaded_models[model_name] = load_model(model_path)
+            status = True
+        except Exception as e:
+            print('[Inference Server] Model Loading Error: {}'.format(e))
+        return status
+    
+    def load_label(self, label_path, model_name):
+        status = None
+        try:
+            if model_name not in self.loaded_labels:
+                with open(label_path, 'r') as fp:
+                    labels = json.load(fp)
+                self.loaded_labels[model_name] = {int(k): str(v) for k, v in labels.items()}
+            status = True
+        except Exception as e:
+            print('[Inference Server] Label Loading Error: {}'.format(e))
+        return status
+    
+
+    def predict_images(self, model_name, batch_images, num_return=3):
+        model = self.loaded_models[model_name]
+        label = self.loaded_labels[model_name]
+
+        # start predicting
+        batch_preds = model.predict(batch_images)
+
+        # Decode prediction to get the class label
+        results = self.__decode_pred_to_label(batch_preds, label, num_return)
+
+        return results
+        
+    def __decode_pred_to_label(self, batch_preds, labels, num_return):
+        batch_result = []
+
+        num_label = len(labels)
+        # sort the prob from high to low
+        for pred in batch_preds:
+            result = []
+            # get the index base on the prob from high to low
+            classes = np.argsort(pred)[::-1]
+            probs = np.sort(pred)[::-1]
+            
+            # trim the list
+            if num_return < num_label:
+                classes = classes[:num_return]
+                probs = probs[:num_return]
+
+            # map classes number to label
+            class_labels = [labels.get(x) for x in classes]
+
+            for i in range(len(class_labels)):
+                result.append({
+                    'label': class_labels[i],
+                    'prob': float(probs[i])
+                })
+            
+            # append the results of this image back to batch results
+            batch_result.append(result)
+        
+        return batch_result
+        
+
+
+class retrainer:
     def __init__(self, model_name, model_path):
         self.model_name = model_name
         self.this_model = load_model(model_path)
         
         
-    def retrain_model(self, train_dir, val_dir, nb_epoch, batch_size):
+    def retrain_model(self, train_dir, val_dir, epochs, batch_size):
         """
         retrain the model
         """
@@ -27,7 +110,7 @@ class InceptionRetrainer:
         nb_train_samples = self.__get_nb_files(train_dir)
         nb_classes = len(glob.glob(train_dir + "/*"))
         nb_val_samples = self.__get_nb_files(val_dir)
-        nb_epoch = int(nb_epoch)
+        epochs = int(epochs)
         batch_size = int(batch_size)
         
 
@@ -50,12 +133,12 @@ class InceptionRetrainer:
         # retrain the model
         retrain_history = self.this_model.fit_generator(
             train_generator,
-            nb_epoch=nb_epoch,
-            samples_per_epoch=nb_train_samples//batch_size,
+            epochs=epochs,
+            steps_per_epoch=nb_train_samples//batch_size,
             validation_data=validation_generator,
-            nb_val_samples=nb_val_samples//batch_size,
+            validation_steps=nb_val_samples//batch_size,
             class_weight='auto',
-            verbose=1)
+            verbose=2)
 
         return retrain_history
         
@@ -73,7 +156,8 @@ class InceptionRetrainer:
         self.this_model.save(model_path)
 
 
-class InceptionTransferLeaner:
+
+class transferLeaner:
     def __init__(self, model_name, topless_model_path):
         self.model_name = model_name
         self.new_model = None
@@ -88,7 +172,7 @@ class InceptionTransferLeaner:
             print("* Transfer: Loading Topless Model from Keras...")
             self.topless_model = InceptionV3(include_top=False, weights='imagenet', input_shape=(299, 299, 3))
 
-    def transfer_model(self, train_dir, val_dir, nb_epoch, batch_size, fc_size=1024):
+    def transfer_model(self, train_dir, val_dir, epochs, batch_size, fc_size=1024):
         """
         transfer the topless InceptionV3 model
         to classify new classes
@@ -98,7 +182,7 @@ class InceptionTransferLeaner:
         nb_train_samples = self.__get_nb_files(train_dir)
         nb_classes = len(glob.glob(train_dir + "/*"))
         nb_val_samples = self.__get_nb_files(val_dir)
-        nb_epoch = int(nb_epoch)
+        epochs = int(epochs)
         batch_size = int(batch_size)
         
 
@@ -138,10 +222,10 @@ class InceptionTransferLeaner:
         # train the new model for few epoch
         history_tl = self.new_model.fit_generator(
             train_generator,
-            nb_epoch=nb_epoch,
-            samples_per_epoch=nb_train_samples//batch_size,
+            epochs=epochs,
+            steps_per_epoch=nb_train_samples//batch_size,
             validation_data=validation_generator,
-            nb_val_samples=nb_val_samples//batch_size,
+            validation_steps=nb_val_samples//batch_size,
             class_weight='auto',
             verbose=2)
         
@@ -154,10 +238,10 @@ class InceptionTransferLeaner:
         # train the new model again to fine-tune it
         history_ft = self.new_model.fit_generator(
             train_generator,
-            nb_epoch=nb_epoch,
-            samples_per_epoch=nb_train_samples//batch_size,
+            epochs=epochs,
+            steps_per_epoch=nb_train_samples//batch_size,
             validation_data=validation_generator,
-            nb_val_samples=nb_val_samples//batch_size,
+            validation_steps=nb_val_samples//batch_size,
             class_weight='auto',
             verbose=2)
 
@@ -197,7 +281,7 @@ class InceptionTransferLeaner:
         x = GlobalAveragePooling2D()(x)
         x = Dense(fc_size, activation='relu')(x) #new FC layer, random init
         predictions = Dense(nb_classes, activation='softmax')(x) #new softmax layer
-        model = Model(input=topless_model.input, output=predictions)
+        model = Model(inputs=[topless_model.input], outputs=predictions)
         return model
         
     def __get_nb_files(self, directory):
@@ -209,4 +293,5 @@ class InceptionTransferLeaner:
             for dr in dirs:
                 cnt += len(glob.glob(os.path.join(r, dr + "/*")))
         return cnt
+
 

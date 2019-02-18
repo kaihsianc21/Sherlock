@@ -29,11 +29,6 @@ class Resp(object):
 app = Flask(__name__)
 
 
-models = {
-    'inceptionv3': None,
-    'mnist': None
-}
-
 actions = {
     'transfer': None,
     'label': None,
@@ -56,13 +51,9 @@ def main():
     return Resp().set_status(200).set_msg('Welcome Sherlock').to_json()
 
 
-@app.route('/<model>/<action>', methods=['POST'])
-def model_action(model, action):
+@app.route('/inceptionv3/<action>', methods=['POST'])
+def model_action(action):
     try:
-        # case insensitive for the url
-        model, action = model.lower(), action.lower()
-        if model not in models:
-            raise Exception('error model name: {}'.format(model))
         if action not in actions:
             raise Exception('error action: {}'.format(action))
 
@@ -70,10 +61,10 @@ def model_action(model, action):
 
         print(parms)
 
-        task = celery.send_task('tasks.{}'.format(action), args=[model, action], kwargs=parms)
+        task = celery.send_task('tasks.{}'.format(action), args=[action], kwargs=parms)
 
         msg = {
-            'model': model,
+            'model': "InceptionV3",
             'action': action,
             'task_id': task.id,
             'check_status': url_for('info_task', task_id=task.id)

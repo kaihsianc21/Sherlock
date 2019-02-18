@@ -1,15 +1,12 @@
 import os
 from celery import Celery, current_task
 
-from utils import s3_utils
-from utils import img_utils
+from utils import s3_utils, img_utils
 
 import time
 import json
 
-from models.inceptionV3.inference import inceptionV3Infernecer
-from models.inceptionV3.training import InceptionTransferLeaner
-from models.inceptionV3.training import InceptionRetrainer
+from models import inceptionV3
 
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379'),
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379')
@@ -28,10 +25,10 @@ if not os.path.exists(MODEL_DIR):
 if not os.path.exists(LABEL_DIR):
     os.makedirs(LABEL_DIR)
 
-inference_service = inceptionV3Infernecer()
+IV3_inferencer = inceptionV3.infernecer()
 
 @celery.task(name='tasks.label')
-def label(model, action, bucket_name, bucket_prefix, model_name):
+def label(action, bucket_name, bucket_prefix, model_name):
     cur_step = 0
     steps = ['Downloading Images', 'Loading Images', 'Loading Model', 'Loading Label', 'Labeling Images']
 
@@ -58,7 +55,7 @@ def label(model, action, bucket_name, bucket_prefix, model_name):
     # Load model to inference service
     current_task.update_state(state=steps[cur_step], meta={'Step': '{}/{}'.format(cur_step+1, len(steps))})
     model_path = os.path.join(MODEL_DIR, model_name+'.h5')
-    status = inference_service.load_model(model_path, model_name)
+    status = IV3_inferencer.load_model(model_path, model_name)
     if status is None: raise Exception({'error': 'Model Loading Error'})
     cur_step = cur_step + 1
 
@@ -66,14 +63,14 @@ def label(model, action, bucket_name, bucket_prefix, model_name):
     # Load label to inference service
     current_task.update_state(state=steps[cur_step], meta={'Step': '{}/{}'.format(cur_step+1, len(steps))})
     label_path = os.path.join(LABEL_DIR, model_name+'.json')
-    status = inference_service.load_label(label_path, model_name)
+    status = IV3_inferencer.load_label(label_path, model_name)
     if status is None: raise Exception({'error': 'Label Loading Error'})
     cur_step = cur_step + 1
 
 
     # Labeling images
     current_task.update_state(state=steps[cur_step], meta={'Step': '{}/{}'.format(cur_step+1, len(steps))})
-    results = inference_service.predict_images(model_name, batch_images, num_return=3)
+    results = IV3_inferencer.predict_images(model_name, batch_images, num_return=3)
     cur_step = cur_step + 1
 
     return results
@@ -81,7 +78,7 @@ def label(model, action, bucket_name, bucket_prefix, model_name):
 
 
 @celery.task(name='tasks.transfer')
-def transfer(model, action, bucket_name, bucket_prefix, model_name, nb_epoch=3, batch_size=2):
+def transfer(action, bucket_name, bucket_prefix, model_name, epochs=3, batch_size=2):
     cur_step = 0
     steps = ['Downloading Images', 'Training Model', 'Saving Model', 'Saving Label']
 
@@ -115,10 +112,10 @@ def transfer(model, action, bucket_name, bucket_prefix, model_name, nb_epoch=3, 
     # Init the transfer learning manager
     print('[Transfer]: Start Transfer learning: {}'.format(model_name))
     current_task.update_state(state=steps[cur_step], meta={'Step': '{}/{}'.format(cur_step+1, len(steps))})
-    IV3_transfer = InceptionTransferLeaner(model_name, topless_model_path)
+    IV3_transfer = inceptionV3.transferLeaner(model_name, topless_model_path)
     history = IV3_transfer.transfer_model(
             train_dir = train_dir, val_dir = val_dir, 
-            nb_epoch = nb_epoch, batch_size = batch_size)
+            epochs = epochs, batch_size = batch_size)
     cur_step = cur_step + 1
     
 
@@ -149,7 +146,7 @@ def transfer(model, action, bucket_name, bucket_prefix, model_name, nb_epoch=3, 
 
 
 @celery.task(name='tasks.retrain')
-def retrain(model, action, bucket_name, bucket_prefix, model_name, nb_epoch=3, batch_size=2):
+def retrain(action, bucket_name, bucket_prefix, model_name, epochs=3, batch_size=2):
     cur_step = 0
     steps = ['Downloading Images', 'Retraining Model', 'Saving Model']
     
@@ -178,10 +175,10 @@ def retrain(model, action, bucket_name, bucket_prefix, model_name, nb_epoch=3, b
     # Init the transfer learning manager
     print('[Retrain]: Start Transfer learning: {}'.format(model_name))
     current_task.update_state(state=steps[cur_step], meta={'Step': '{}/{}'.format(cur_step+1, len(steps))})
-    IV3_retrainer = InceptionRetrainer(model_name, model_path)
+    IV3_retrainer = inceptionV3.retrainer(model_name, model_path)
     history = IV3_retrainer.retrain_model(
             train_dir = train_dir, val_dir = val_dir, 
-            nb_epoch = nb_epoch, batch_size = batch_size)
+            epochs = epochs, batch_size = batch_size)
     cur_step = cur_step + 1    
 
 

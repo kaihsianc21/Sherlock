@@ -13,13 +13,13 @@ def label_parms_filter(request):
 def retrain_parms_filter(request):
     bucket_name = request.form.get('bucket_name')
     bucket_prefix = request.form.get('bucket_prefix')
-    nb_epoch = request.form.get('nb_epoch')
+    epochs = request.form.get('epochs')
     batch_size = request.form.get('batch_size')
     model_name = request.form.get('model_name')
     parms = {
         'bucket_name': bucket_name,
         'bucket_prefix': bucket_prefix,
-        'nb_epoch': nb_epoch,
+        'epochs': epochs,
         'batch_size': batch_size,
         'model_name': model_name
     }
