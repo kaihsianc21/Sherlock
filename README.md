@@ -23,7 +23,7 @@ Everything is wrapped in Docker, here are the core packages used in *Sherlock*.
 
 
 ## Platform Architecture
-![](images/architecture.png)
+![architecture](images/architecture.png)
 
 ---
 
@@ -82,10 +82,10 @@ If *Sherlock* is running correctly, go to `http://<PLATFORM-IP>:<PORT>/` in your
 .           .
 ```
 - *YOUR_BUCKET_NAME* : Your S3 bucket name.
-- *YOUR_BUCKET_PREFIX* : Path to point your folder which includes training and validating folder.
+- *YOUR_BUCKET_PREFIX* : The path point to the folder which includes training and validating data folders.
 - *YOUR_MODEL_NAME* : Your preferred model name that will be used to identify this model once it is trained.
 
-The name of train and val folders **can't be changed**.  
+The name of **train** and **val** folders **can't be changed**.  
 The folder names for different classes will be used as the label of the class. You can create as many class folders as you want.
 
 Usage:
@@ -112,7 +112,7 @@ Return:
 ```
 
 
-#### 3. Labeling new images:
+#### 3. Labeling New Images:
 Once transfer learning is finished, you can use the newly created model to label your new images. The new image folder should also be hosted in S3. Please structure your folder like this:
 ```
 .
@@ -151,7 +151,7 @@ Return:
 ```
 
 
-#### 4. Resume training on an Existing Model:
+#### 4. Resume Training on an Existing Model:
 Once more labeled images become available, you can retrain existing models by submitting additional model folders.  
 The S3 bucket architecture should be the same as the one used by the transfer learning API.  
 The retraining API is pretty similar to the one used in the transfer learning API.
@@ -229,9 +229,9 @@ Result(if completed):
 More Information [Schedule GPU on Kubernetes](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/)
 
 ## References
-AWS VPC guide: https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html  
-EKS with GPU support: https://docs.aws.amazon.com/eks/latest/userguide/gpu-ami.html  
-Kubernetes Dashboard: https://github.com/kubernetes/dashboard  
+AWS VPC guide : https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html  
+EKS with GPU support : https://docs.aws.amazon.com/eks/latest/userguide/gpu-ami.html  
+Kubernetes Dashboard : https://github.com/kubernetes/dashboard  
 
 
  
