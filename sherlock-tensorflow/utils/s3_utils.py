@@ -5,9 +5,20 @@ AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 
 def is_dir(path):
+    """
+    :type path: str
+    :rtype: bool
+    """
     return path[-1] == '/'
 
 def download_file(bucket_name, obj_key, dest_path):
+    """
+    :type bucket_name: str
+    :type obj_key: str
+    :type dest_path: str
+    :rtype: bool
+    """
+
     # meta folder in S3 will raise exceptions
     status = None
     try:
@@ -21,6 +32,13 @@ def download_file(bucket_name, obj_key, dest_path):
     return status
 
 def download_dir(bucket_name, bucket_prefix, dest_path):
+    """
+    :type bucket_name: str
+    :type bucket_prefix: str
+    :type dest_path: str
+    :rtype: bool
+    """
+
     s3 = boto3.resource('s3')
     bucket = s3.Bucket(bucket_name)
 

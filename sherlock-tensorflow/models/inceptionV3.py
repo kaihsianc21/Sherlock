@@ -29,6 +29,11 @@ class infernecer:
         self.loaded_labels = {}
 
     def load_model(self, model_path, model_name):
+        """
+        :type model_path: str
+        :type model_name: str
+        :rtype: bool
+        """
         status = None
         try:
             if model_name not in self.loaded_models.keys():
@@ -39,6 +44,12 @@ class infernecer:
         return status
     
     def load_label(self, label_path, model_name):
+        """
+        :type label_path: str
+        :type label_name: str
+        :rtype: bool
+        """
+
         status = None
         try:
             if model_name not in self.loaded_labels:
@@ -49,9 +60,15 @@ class infernecer:
         except Exception as e:
             print('[Inference Server] Label Loading Error: {}'.format(e))
         return status
-    
 
     def predict_images(self, model_name, batch_images, num_return=3):
+        """
+        :type model_path: str
+        :type batch_images: List[]
+        :type num_return: int
+        :rtype: List[]
+        """
+
         model = self.loaded_models[model_name]
         label = self.loaded_labels[model_name]
 
@@ -99,11 +116,17 @@ class retrainer:
     def __init__(self, model_name, model_path):
         self.model_name = model_name
         self.this_model = load_model(model_path)
-        
-        
+           
     def retrain_model(self, train_dir, val_dir, epochs, batch_size):
         """
-        retrain the model
+        #
+        # Retrain the model
+        #
+        :type train_dir: str
+        :type val_dir: List[]
+        :type epochs: int
+        :type batch_size: int
+        :rtype: List[]
         """
         
         # set up parameters
@@ -163,8 +186,7 @@ class transferLeaner:
         self.new_model = None
         self.new_label = None 
 
-        # the creation of the model directory should be handled in the API
-        # loading topless model from local, otherwise from Keras
+        # Load topless model from local, otherwise from Keras
         try:
             print("* Transfer: Loading Topless Model...")
             self.topless_model = load_model(topless_model_path)
@@ -174,8 +196,15 @@ class transferLeaner:
 
     def transfer_model(self, train_dir, val_dir, epochs, batch_size, fc_size=1024):
         """
-        transfer the topless InceptionV3 model
-        to classify new classes
+        # 
+        # Transfer the topless InceptionV3 model to classify new classes
+        #
+        :type train_dir: str
+        :type val_dir: List[]
+        :type epochs: int
+        :type batch_size: int
+        :type fc_size: int
+        :rtype: List[]
         """
         
         # set up parameters
@@ -187,7 +216,7 @@ class transferLeaner:
         
 
         # data prep
-        train_datagen =  ImageDataGenerator(preprocessing_function=preprocess_input)
+        train_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
         val_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
 
 

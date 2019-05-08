@@ -15,19 +15,31 @@ class Resp(object):
     def __init__(self):
         self.status = self.msg = None
         self.time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     def set_status(self, status):
+        """
+        :type status: int
+        :rtype: Resp
+        """
         self.status = status
         return self
+
     def set_msg(self, msg):
+        """
+        :type msg: msg
+        :rtype: Resp
+        """
         self.msg = msg
         return self
+
     def to_json(self):
-        #return json.dumps(self.__dict__) + '\n'
+        """
+        :rtype: str
+        """
         return jsonify(self.__dict__)
 
 
 app = Flask(__name__)
-
 
 actions = {
     'transfer': None,
@@ -46,6 +58,7 @@ parms_filters = {
 def page_not_found(e):
     return Resp().set_status(404).set_msg('Page Not Found').to_json()
 
+
 @app.route('/')
 def main():
     return Resp().set_status(200).set_msg('Welcome Sherlock').to_json()
@@ -53,13 +66,16 @@ def main():
 
 @app.route('/inceptionv3/<action>', methods=['POST'])
 def model_action(action):
+    """
+    :type action: str
+    :rtype: Resp
+    """
+
     try:
         if action not in actions:
             raise Exception('error action: {}'.format(action))
 
         parms = parms_filters[action](request)
-
-        print(parms)
 
         task = celery.send_task('tasks.{}'.format(action), args=[action], kwargs=parms)
 
@@ -80,6 +96,11 @@ def model_action(action):
 
 @app.route('/info/<task_id>')
 def info_task(task_id):
+    """
+    :type task_id: str
+    :rtype: Resp
+    """
+
     res = celery.AsyncResult(task_id)
     msg = {
         'status': res.state,
@@ -89,6 +110,11 @@ def info_task(task_id):
 
 @app.route('/cancel/<task_id>')
 def cancel_task(task_id):
+    """
+    :type task_id: str
+    :rtype: Resp
+    """
+
     celery.control.revoke(task_id, terminate=True)
     res = celery.AsyncResult(task_id)
     msg = {
