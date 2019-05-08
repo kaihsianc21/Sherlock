@@ -21,6 +21,20 @@ spec:
             value: "redis://${namespace}-redis:6379"
         ports:
           - containerPort: 5000
+
+    #  - image: python:3.6-alpine
+    #     workingDir: /sherlock
+    #     volumeMounts:
+    #      - name: sherlock-api
+    #        mountPath: /sherlock
+    #        subPath: "Sherlock/sherlock-api"
+    #     command: ["bash"]
+    #     args: ["-c", "chmod u+rx setup.sh && sh setup.sh && gunicorn --bind 0.0.0.0:5000 --workers 3 app:app"]
+    #   volumes:
+    #   - name: sherlock-api
+    #     gitRepo:
+    #       repository: https://github.com/kaihsianc21/Sherlock.git
+    #       revision: master
 ---
 apiVersion: v1
 kind: Service

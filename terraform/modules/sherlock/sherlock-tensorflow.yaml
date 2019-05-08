@@ -28,6 +28,18 @@ spec:
             value: ${AWS_ACCESS_KEY_ID}
           - name: AWS_SECRET_ACCESS_KEY
             value: ${AWS_SECRET_ACCESS_KEY}
-          
+      # - image: tensorflow/tensorflow:1.12.0-gpu-py3
+      #   workingDir: /sherlock
+      #   volumeMounts:
+      #    - name: sherlock-tensorflow
+      #      mountPath: /sherlock
+      #      subPath: "Sherlock/sherlock-tensorflow"
+      #   command: ["bash"]
+      #   args: ["-c", "chmod u+rx setup.sh && sh setup.sh && celery -A tasks worker --loglevel=info --concurrency=1 --max-tasks-per-child=1"]
+      # volumes:
+      # - name: sherlock-tensorflow
+      #   gitRepo:
+      #     repository: https://github.com/kaihsianc21/Sherlock.git
+      #     revision: master
 
     
